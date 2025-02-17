@@ -5,6 +5,10 @@ It logs execution details and system metrics (CPU, memory, disk usage) into a lo
 
 An overview of the architectural decisions is included in [ARCHITECTURE.md](ARCHITECTURE.md).
 
+- Component 1 of the assignment: [Pipeline Simulations](simulate_pipelines) and [Signal Collection](signal_collection)
+- Component 2 of the assignment: Agent Implementation -> [`/tracer_bio_agent`](tracer_bio_agent)
+- Component 3 of the assignment: [Query Validations](query_validation_scripts/README.md).
+
 ## Features
 
 - Tracks process executions (`execve` syscall) using eBPF (`ebpf_execve_service.py`)

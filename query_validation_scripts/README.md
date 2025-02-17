@@ -122,6 +122,7 @@ The data is shown in GBs.
 
 ### Pipeline CPU Usage
 ![Pipeline CPU usage](figures/pipeline_cpu_usage.png)
+Query:
 ```sqlite
 SELECT 
     CAST(strftime('%s', snapshot_time) AS INTEGER) AS time_bucket,
@@ -136,7 +137,8 @@ This SQL query retrieves and aggregates CPU usage data for the three simulated p
 (pipeline_1, pipeline_2, and bioinformatics_pipeline) over time from the processed_metrics table.
 
 ### Pipeline Memory Usage
-![Pipeline Memory (RSS) usage](figures/pipeline_rss_usage.png)
+![Pipeline Memory (RSS) usage](figures/pipeline_memory_usage.png)
+Query:
 ```sqlite
 SELECT 
     CAST(strftime('%s', snapshot_time) AS INTEGER) AS time_bucket,
@@ -152,6 +154,7 @@ It groups the results by time and pipeline while converting memory usage to giga
 
 ### Top 3 System Libraries
 ![Top 3 system libraries](figures/top_3_sys_libs.png)
+Query:
 ```sqlite
 WITH library_usage AS (
     SELECT 
@@ -170,6 +173,7 @@ It does so by filtering and aggregating CPU usage data from the metrics table.
 
 ### Average Pipeline Commands Duration
 ![Average duration of pipeline commands](figures/avg_duration_pipeline_commands.png)
+Query:
 ```sqlite
 WITH execution_summary AS (
     SELECT 

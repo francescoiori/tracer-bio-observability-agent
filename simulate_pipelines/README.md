@@ -18,7 +18,7 @@ simulate_pipelines/
 This scripts generate a simulated workload using the `stress` tool, applying CPU and memory pressure to evaluate system resource consumption and execution behavior.
 
 ### 2. `bioinformatics_pipeline.sh`  
-This script simulates a simple bioinformatics pipeline by processing files available online. It does not apply system stress but instead mimics a data processing workflow.  
+This script simulates a simple bioinformatics pipeline by processing files available online. It does not apply much system stress but instead mimics a data processing workflow.  
 
 ### 3. `run_pipeline.sh`  
 This script orchestrates the execution of the pipelines:  
@@ -31,7 +31,5 @@ This script orchestrates the execution of the pipelines:
 The `stress` tool is used in `pipeline_1.sh` and `pipeline_2.sh` to simulate real-world workloads by artificially generating CPU, memory, and I/O pressure. This approach allows for:  
 
 - **Performance Evaluation:** Understanding how the system behaves under different workload conditions.  
-- **Resource Monitoring:** Capturing system metrics like CPU and memory usage using eBPF and psutil-based monitoring services.  
-- **Testing Execution Tracing:** Ensuring the correct functioning of execution tracking scripts within `tracer_bio_agent/services/`.  
-
-By using `stress`, these simulated pipelines help validate system monitoring capabilities and an
+- **Resource Monitoring:** Capturing system metrics like CPU and memory usage using eBPF and ps monitoring services.  
+- **Testing Execution Tracing:** Ensuring the correct functioning of execution tracking scripts within `tracer_bio_agent/services/`.
