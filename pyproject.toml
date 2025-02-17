@@ -1,0 +1,28 @@
+[tool.poetry]
+name = "tracer_bio_agent"
+version = "0.1.0"
+description = "Async eBPF agent to track process executions and system metrics"
+authors = ["Francesco Iori <francesco.iori11@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+sqlalchemy = {extras = ["asyncio"], version = "^2.0"}
+aiosqlite = "^0.18.0"
+pydantic = "^2.0"
+toml = "^0.10.2"
+asyncio = "^3.4.3"
+duckdb = "1.2.0"
+pandas = "2.2.1"
+pyarrow = "19.0.0"
+python-dotenv = "1.0.1"
+psutil = "6.1.1"
+matplotlib = "3.10.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+pytest-asyncio = "^0.21.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

@@ -1,0 +1,55 @@
+#!/usr/bin/env bpftrace
+
+/*
+ * lifecycle.bt - Trace process execution and termination events using BPF
+ *
+ * This script monitors when processes start (via execve() syscalls) and when they exit
+ * (via the sched_process_exit tracepoint). It provides insights into process lifecycle
+ * events, including process ID (PID), parent process ID (PPID), user ID (UID),
+ * command name, arguments, and execution duration.
+ *
+ * Features:
+ * - Logs when a process starts (`sys_enter_execve` tracepoint).
+ * - Logs when a process exits (`sched_process_exit` tracepoint).
+ * - Captures process duration (from execve() to exit).
+ * - Estimates CPU usage in CPU ticks.
+ *
+ * Usage:
+ * - Run this script using `bpftrace lifecycle.bt`
+ * - This requires BPF (eBPF) support in the Linux kernel.
+ *
+ * Output Example:
+ * ```
+ * START: Timestamp: 2025-02-16 12:34:56, PID: 1234, PPID: 567, UID: 1000, Command: bash, Args: -c, ls
+ * END:   Timestamp: 2025-02-16 12:34:57, PID: 1234, PPID: 567, UID: 1000, Command: bash, Duration: 500 ms, CPU: 12345678 ticks
+ * ```
+ */
+
+
+// Trace system calls for execve (process lifecycle events)
+tracepoint:syscalls:sys_enter_execve
+{
+    @start_time[pid] = nsecs;
+
+    // Start event for the process
+    printf("START: Timestamp: %s, PID: %d, PPID: %d, UID: %d, Command: %s, Args: ",
+        strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, curtask->real_parent->pid,
+        uid, comm);
+    join(args->argv, ",");
+}
+
+// Monitor process exit & log CPU tikz
+tracepoint:sched:sched_process_exit
+/@start_time[pid]/
+{
+    // Calculate approximate CPU usage
+    @cpu_time[pid] = nsecs - @start_time[pid];
+
+    printf("END: Timestamp: %s, PID: %d, PPID: %d, UID: %d, Command: %s, Duration: %d ms, CPU: %lld ticks\n",
+        strftime("%Y-%m-%d %H:%M:%S", nsecs), pid, curtask->real_parent->pid,
+        uid, comm, (nsecs - @start_time[pid]) / 1000000, @cpu_time[pid]);
+
+    // Clean up the collected data
+    delete(@start_time[pid]);
+    delete(@cpu_time[pid]);
+}
