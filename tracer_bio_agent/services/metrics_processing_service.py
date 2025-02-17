@@ -3,7 +3,7 @@ import logging
 import toml
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy import delete, and_
+from sqlalchemy import delete, and_, or_
 from tracer_bio_agent.models import Metrics, ProcessedExecution, ProcessedMetrics
 from tracer_bio_agent.crud import MetricsRepository
 from tracer_bio_agent.config import Config
@@ -38,8 +38,7 @@ class MetricsProcessingService:
             # Fetch only metrics for PIDs that exist in `ProcessedExecutions`
             query = (
                 select(Metrics, ProcessedExecution.pipeline)
-                .join(ProcessedExecution, Metrics.pid == ProcessedExecution.pid)
-                .where(Metrics.user.in_(self.filtered_users))  # Only process for allowed users
+                .join(ProcessedExecution, Metrics.pid == ProcessedExecution.pid or Metrics.ppid == ProcessedExecution.pid)
             )
 
             result = await self.session.execute(query)
@@ -84,4 +83,4 @@ class MetricsProcessingService:
         while True:
             await self.process_metrics()
             # await self.cleanup_buffer_table()
-            await asyncio.sleep(5)  # Run processing every minute
+            await asyncio.sleep(Config.PROCESSING_INTERVAL)  # Run processing every minute

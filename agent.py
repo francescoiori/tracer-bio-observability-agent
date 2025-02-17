@@ -1,4 +1,3 @@
-import os
 import logging
 import asyncio
 from tracer_bio_agent.database import init_db, AsyncSessionLocal
@@ -6,13 +5,12 @@ from tracer_bio_agent.services.metrics_service import MetricsService
 from tracer_bio_agent.services.ebpf_execve_service import ExecveLoggerService
 from tracer_bio_agent.services.execution_processing_service import ExecutionProcessingService
 from tracer_bio_agent.services.metrics_processing_service import MetricsProcessingService
-from tracer_bio_agent.crud import MetricsRepository, ExecutionRepository
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
 async def main():
-    os.remove("tracer_bio.db")
+    # os.remove("tracer_bio.db")
 
     await init_db()
 
@@ -26,8 +24,10 @@ async def main():
         exec_processing_service = ExecutionProcessingService(exec_processing_session)
         metrics_processing_service = MetricsProcessingService(metrics_processing_session)
 
-        services = [log_service, metrics_service]
-        # services = [exec_processing_service, metrics_processing_service]
+        logging_services = [log_service, metrics_service]
+        proc_services = [metrics_processing_service, exec_processing_service]
+
+        services = logging_services + proc_services
 
         try:
             await asyncio.gather(*(service.run() for service in services))

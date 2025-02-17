@@ -5,7 +5,7 @@ description = "Async eBPF agent to track process executions and system metrics"
 authors = ["Francesco Iori <francesco.iori11@gmail.com>"]
 license = "MIT"
 
-[tool.poetry.dependencies]
+[tool.poetry.group.dev.dependencies]
 python = "^3.12"
 sqlalchemy = {extras = ["asyncio"], version = "^2.0"}
 aiosqlite = "^0.18.0"
@@ -15,7 +15,6 @@ asyncio = "^3.4.3"
 duckdb = "1.2.0"
 pandas = "2.2.1"
 pyarrow = "19.0.0"
-python-dotenv = "1.0.1"
 psutil = "6.1.1"
 matplotlib = "3.10.0"
 

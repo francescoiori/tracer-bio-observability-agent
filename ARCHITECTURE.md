@@ -1,14 +1,10 @@
 # Modular Signals and Metrics Observability Agent
 
-## Overview 
+## Overview
 
-This project contains a prototype of an observability agent in Python that can be used to
-tracks Linux system binary telemetry data. 
-
-It logs execution details and usage metrics (CPU and memory usage) into a local SQLite database.
-
-This project is designed to process execution logs and system metrics asynchronously, 
-ensuring modularity, scalability, and adherence to software design principles. 
+This project provides a prototype of an observability agent built in Python to track telemetry data from Linux system binaries.
+It logs execution details and system resource usage (CPU and memory) into a local SQLite database.
+The system is designed for asynchronous processing to ensures performance and adherence to good design patterns to ensure modularity, scalability.
 
 ## System Requirements
 
@@ -37,9 +33,10 @@ ensuring modularity, scalability, and adherence to software design principles.
 - Implement fallback methods for metric collection if primary methods fail.
 
 ## Architectural Decisions
-Based on the above requirements, the following architectural decisions have been made.
+Based on the above requirements, the following architectural decisions have been made to implement a  
+proof-of-concept prototype agent.
 
-### Tech stack and packages:
+### Tech stack and packages
 #### Use of Python:
 Python was chosen for its ease of development and ability to quickly implement an end-to-end solution. 
 It offers built-in libraries and third-party packages that simplify 
@@ -75,6 +72,16 @@ While Parquet files will be the final data format for querying, an intermediate 
 
 **Alternative Consideration:**
 - Using **DuckDB** directly instead of SQLite. However, SQLite provides an **easier integration** with `SQLAlchemy` while still allowing DuckDB to query Parquet efficiently.
+
+#### Grafana for Visualization and Analysis
+
+**Why Grafana?**
+
+- Rich Visualization: Provides dashboards with graphs, tables, and alerts to analyze log and metric data effectively.
+- Real-Time Monitoring: Allows real-time tracking of performance metrics. 
+- Seamless SQLite Support: Grafana has a built-in SQLite data source (through a plugin), making it easy to connect and query stored metrics. 
+- Custom Queries: Supports SQL queries to filter, aggregate, and analyze specific system events.
+
 
 #### Use of eBPF for Process Signal and Metric Collection
 eBPF, via `bpftrace`, is used to collect execve syscall events. This approach was preferred over bcc due to its quicker setup. 
@@ -116,13 +123,7 @@ After ingestion, data is filtered and processed through two asynchronous service
   - Execution records are cleaned and stored in `processed_executions`, ensuring accurate arguments and linking processes to pipelines. 
   - Metrics are filtered by PID and stored in `processed_metrics`, ensuring only relevant data is retained.
 
-#### Future Scalability Considerations
-- Remote Database Integration: The current SQLite-based architecture can be extended to a remote database with minimal modifications. 
-- User Identification: A user table should be introduced to associate executions with specific users. 
-- Distributed Processing: The processing workload could be offloaded to worker nodes (e.g., on Kubernetes) to improve scalability. 
-- Message Broker for Scalability: Using a message broker like Kafka or RabbitMQ could help manage load and mitigate backpressure, improving system reliability under high data throughput.
-
-#### **6. Query Execution Using DuckDB and Parquet**
+#### Query Execution Using DuckDB and Parquet
 - **DuckDB** is chosen for **in-memory query execution** with Parquet storage:
   - **Performance**: Optimized for analytical queries on large structured data.
   - **Efficiency**: Runs SQL directly on Parquet without additional indexing.
@@ -130,15 +131,24 @@ After ingestion, data is filtered and processed through two asynchronous service
 
 ### **Final Architectural Overview**
 ```
-+--------------------+      +--------------------+      +---------------------+
-| Signal Collector   | ---> | Data Processor     | ---> | Query Engine        |
-| (Async Process)    |      | (Filters & Transf.)|      | (DuckDB & Parquet)  |
-+--------------------+      +--------------------+      +---------------------+
++---------------------+      +---------------------+      +---------------------+
+|  Signal Collector   | ---> |    SQLite Database  | ---> |  Data Processor     |
+| (Async Services)   |       | (Centralized Store) | <--- | (ETL pipeline)      |
++---------------------+      +---------------------+      +---------------------+
+                                            |
+                                            v
+                                  +---------------------+
+                                  |   Parquet Storage   |
+                                  |  & Query Engine     |
+                                  |  (DuckDB)           |
+                                  +---------------------+
+
 ```
-- **Process Monitoring** via `asyncio` and `psutil`
-- **Data Storage** in SQLite with `SQLAlchemy`
-- **Query Execution** via DuckDB on Parquet
-- **Scalability** via modular service-based design
+
+- Signal Collectors (async services) monitor and log execution details and system resource usage into a central SQLite database.
+- Data Processors filter and extract relevant data from the SQLite database for meaningful insights.
+- The processed data is exported to Parquet for long-term storage and queried using DuckDB for analysis.
+- This architecture ensures efficient data ingestion, processing, and querying, supporting both real-time and historical analysis.
 
 ## Components
 
@@ -157,17 +167,17 @@ After ingestion, data is filtered and processed through two asynchronous service
 - Uses `ps` instead of `bpftrace` for CPU/memory metrics collection due to compatibility issues. This is a compromise as it may impact performance.
 
 ### **4. Execution and Metrics processing**
-- Execution signals and metrics are processed by two separate services, that run also concurrently.
+- Execution signals and metrics are processed by two separate services, that run also asynchronously.
 - `execution_processing_service` and `metrics_processing_service`
 
-### **4. DB Repositories**
+### **5. DB Repositories**
 - Implements database operations using SQLAlchemy.
 - One repository for each table:
   - `ExecutionRepository` and `ProcessedExecutionRepository` for the raw and filtered execution signals.
   - `MetricsRepository` and `ProcessedMetricsRepository`for the raw and processed metrics.
 - Execution signals and metrics are logged and processed separately.
 
-### **5. Main Application**
+### **6. Main Application**
 - Initializes the database connection.
 - Runs `ExecveLoggerService` and `MetricsService` concurrently.
 - Handles `asyncio.CancelledError` for graceful shutdown.
@@ -178,8 +188,9 @@ After ingestion, data is filtered and processed through two asynchronous service
 - **Fault Tolerance** - Implements logging and exception handling for robust error management.
 - **Extensibility** - New services or additional parsing rules can be integrated easily.
 
-## Future Enhancements
-- **Real-time Streaming Support** - Integration with Kafka or Redis for distributed log processing.
-- **Advanced Filtering** - Customizable filtering rules for metrics and logs.
-- **Monitoring & Alerting** - Integration with Grafana.
-
+#### Future Scalability Considerations
+- Remote Database Integration: The current SQLite-based architecture can be extended to a remote database with minimal modifications. 
+- User Identification: A user table should be introduced to associate executions with specific users. 
+- Distributed Processing: The processing workload could be offloaded to worker nodes (e.g., on Kubernetes) to improve scalability. 
+- Message Broker for Scalability: Using a message broker like Kafka or RabbitMQ could help manage load and mitigate backpressure, improving system reliability under high data throughput.
+- Unit and system testing using pytest and mockups.

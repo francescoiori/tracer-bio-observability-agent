@@ -1,10 +1,6 @@
 # config.py
-from dotenv import load_dotenv
-from pathlib import Path
 import toml
 import os
-
-load_dotenv()
 
 
 class Config:

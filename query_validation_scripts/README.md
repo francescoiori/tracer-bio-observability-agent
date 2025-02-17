@@ -66,12 +66,12 @@ The `execution_analysis.py` script performs two key analyses using DuckDB and Ma
 ### Execution Time vs CPU Usage for Libraries  
 This chart visualizes the top 10 libraries based on CPU time consumption.
 
-![Execution Time vs CPU Usage](execution_time_vs_cpu_usage.png)
+![Execution Time vs CPU Usage](figures/execution_time_vs_cpu_usage.png)
 
 ### CPU Usage Trends Over Time  
 This line plot shows the total CPU usage over time, helping to identify workload patterns.
 
-![CPU Usage Trends Over Time](cpu_usage_trends.png)
+![CPU Usage Trends Over Time](figures/cpu_usage_trends.png)
 
 ## How It Works  
 
@@ -86,3 +86,106 @@ The `execution_analysis.py` script connects to DuckDB and loads Parquet files. I
    - Aggregates total CPU usage for each time bucket to analyze trends.
 
 Both analyses generate plots that are saved as `execution_time_vs_cpu_usage.png` and `cpu_usage_trends.png`.
+
+## Grafana Observability Platform
+A local Grafana instance has been used to create a small dashboard to visualise and analyse the data.
+
+![Dashboard Overview](figures/dashboard_overview.png)
+
+### Overall CPU Usage
+![Overall CPU usage](figures/overall_cpu_usage.png)
+Query:
+```sqlite
+SELECT 
+    CAST(strftime('%s', snapshot_time) AS INTEGER) AS time_bucket,
+    (CAST(SUM(rss) AS FLOAT) / 1024 / 1024) AS total_memory_usage
+FROM metrics
+GROUP BY time_bucket
+ORDER BY time_bucket;
+```
+This SQL query retrieves memory usage data from a table named metrics and aggregates it over time.
+
+### Overall Memory RSS Usage
+![Overall Memory (RSS) usage](figures/overall_rss_usage.png)
+Query:
+```sqlite
+SELECT 
+    CAST(strftime('%s', snapshot_time) AS INTEGER) AS time_bucket,
+    (CAST(SUM(rss) AS FLOAT) / 1024 / 1024) AS total_memory_usage
+FROM metrics
+GROUP BY time_bucket
+ORDER BY time_bucket;
+```
+This SQL query is used to aggregate memory usage over time from a metrics table. 
+It converts timestamps into Unix time, sums memory usage, and orders results chronologically.
+The data is shown in GBs.
+
+### Pipeline CPU Usage
+![Pipeline CPU usage](figures/pipeline_cpu_usage.png)
+```sqlite
+SELECT 
+    CAST(strftime('%s', snapshot_time) AS INTEGER) AS time_bucket,
+    SUM(cpu/16) AS avg_cpu_usage_percent, pipeline
+FROM processed_metrics
+WHERE (pipeline == 'pipeline_1' or pipeline == 'pipeline_2' or pipeline == 'bioinformatics_pipeline')
+GROUP BY time_bucket, pipeline
+ORDER BY time_bucket;
+describe this
+```
+This SQL query retrieves and aggregates CPU usage data for the three simulated pipelines 
+(pipeline_1, pipeline_2, and bioinformatics_pipeline) over time from the processed_metrics table.
+
+### Pipeline Memory Usage
+![Pipeline Memory (RSS) usage](figures/pipeline_rss_usage.png)
+```sqlite
+SELECT 
+    CAST(strftime('%s', snapshot_time) AS INTEGER) AS time_bucket,
+    SUM(CAST(rss AS FLOAT)/1024/1024) AS total_mem_usage, pipeline
+FROM processed_metrics
+WHERE (pipeline == 'pipeline_1' or pipeline == 'pipeline_2' or pipeline == 'bioinformatics_pipeline')
+GROUP BY time_bucket, pipeline
+ORDER BY time_bucket;
+```
+This SQL query retrieves and aggregates memory usage data for specific pipelines 
+from the processed_metrics table. 
+It groups the results by time and pipeline while converting memory usage to gigabytes.
+
+### Top 3 System Libraries
+![Top 3 system libraries](figures/top_3_sys_libs.png)
+```sqlite
+WITH library_usage AS (
+    SELECT 
+        command AS library,
+        SUM(cpu) AS total_cpu_time
+    FROM metrics
+    WHERE command LIKE '%.so%' 
+       OR command LIKE '/lib/%' 
+       OR command LIKE '/usr/lib/%' 
+       OR command LIKE '/usr/local/lib/%'  
+    GROUP BY library
+)
+```
+This SQL query identifies the top 3 system libraries that have consumed the most CPU time. 
+It does so by filtering and aggregating CPU usage data from the metrics table.
+
+### Average Pipeline Commands Duration
+![Average duration of pipeline commands](figures/avg_duration_pipeline_commands.png)
+```sqlite
+WITH execution_summary AS (
+    SELECT 
+        m.command AS library,
+        AVG(CAST(e.duration AS FLOAT) / 1000) AS avg_duration,
+        SUM(m.cpu) AS total_cpu_time
+    FROM processed_metrics m
+    JOIN processed_executions e ON m.pid = e.ppid or m.pid = e.pid
+    WHERE e.duration IS NOT NULL
+    GROUP BY library
+)
+SELECT library, avg_duration, total_cpu_time
+FROM execution_summary
+ORDER BY total_cpu_time DESC
+LIMIT 10;
+```
+This SQL query analyzes library execution performance by computing the average execution 
+time and total CPU consumption for shared libraries. 
+It retrieves the top 10 libraries that have used the most CPU time.

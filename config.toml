@@ -1,11 +1,11 @@
 [database]
-url = "sqlite+aiosqlite:///./tracer_bio.db"
+url = "sqlite+aiosqlite:///./tracer_bio3.db"
 
 [monitoring]
 interval = 2  # Seconds between metric collection
 
 [processing]
-interval = 5  # Seconds between metric processing
+interval = 30  # Seconds between metric processing
 
 [filters]
 users = ["francesco-iori", 'root']

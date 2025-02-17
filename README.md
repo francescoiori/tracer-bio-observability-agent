@@ -1,13 +1,15 @@
 # Tracer Observability Agent
 
-This project is an asynchronous eBPF-based agent that tracks process executions and system resource usage. It logs execution details and system metrics (CPU, memory, disk usage) into a local SQLite database.
+This project is an asynchronous eBPF-based agent that tracks process executions and system resource usage. 
+It logs execution details and system metrics (CPU, memory, disk usage) into a local SQLite database.
+
+An overview of the architectural decisions is included in [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## Features
 
 - Tracks process executions (`execve` syscall) using eBPF (`ebpf_execve_service.py`)
 - Monitors CPU, memory, and disk usage for tracked processes using `ps` (`metrics_service.py`).
 - Raw data is ingested in a local SQLite database.
-- 
 - Uses SQLAlchemy with async support (`aiosqlite`).
 - Basic configuration is managed via a TOML file.
 
